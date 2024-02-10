@@ -30,8 +30,21 @@ export default function ExpenseTracker() {
   };
 
   const deleteTransaction = (id) => {
+    const transactionToDelete = entries.find((transaction) => transaction.id === id);
+    if (transactionToDelete.type === "Income") {
+      setIncome(income - parseFloat(transactionToDelete.amount));
+    } else {
+      setExpenses(expenses - parseFloat(transactionToDelete.amount));
+    }
+    setBalance(
+      balance -
+        (transactionToDelete.type === "Income"
+          ? parseFloat(transactionToDelete.amount)
+          : -parseFloat(transactionToDelete.amount))
+    );
     setEntries(entries.filter((transaction) => transaction.id !== id));
   };
+  
 
   const editTransaction = (id) => {
     setEditingEntryId(id);
