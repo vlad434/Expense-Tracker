@@ -34,9 +34,17 @@ export default function ExpenseTracker() {
   };
 
   const editTransaction = (id) => {
-    console.log("edit transaction", id);
     setIsEditing(true);
-    // setEntries(entries.filter((transaction) => transaction.id !== id));
+
+    const transactionToEdit = entries.find(
+      (transaction) => transaction.id === id
+    );
+
+    setDescription(transactionToEdit.name);
+    setAmount(transactionToEdit.amount);
+    setCurrency(transactionToEdit.currency);
+    setTransactionType(transactionToEdit.type);
+    setSelectedCategory(transactionToEdit.category);
   };
 
   const resetFields = () => {
@@ -84,6 +92,36 @@ export default function ExpenseTracker() {
       resetFields();
     } else {
       console.log("Form is not valid. Please fill in all fields.");
+    }
+  };
+
+  const onSubmitEditFields = (e, id) => {
+    e.preventDefault();
+
+    const formIsValid =
+      description !== "" &&
+      (amount !== 0 || amount !== "") &&
+      selectedCategory !== "default";
+
+    if (formIsValid) {
+      const updatedEntries = [...entries];
+
+      const transactionIndex = updatedEntries.findIndex(
+        (transaction) => transaction.id === id
+      );
+
+      // Update the description of the transaction at the found index
+      updatedEntries[transactionIndex].name = description;
+      updatedEntries[transactionIndex].amount = amount;
+      updatedEntries[transactionIndex].currency = currency;
+      updatedEntries[transactionIndex].type = transactionType;
+      updatedEntries[transactionIndex].category = selectedCategory;
+
+      setEntries(updatedEntries);
+
+      setIsEditing(false);
+    } else {
+      console.log("Edit form is not valid. Please fill in all fields.");
     }
   };
 
@@ -191,8 +229,73 @@ export default function ExpenseTracker() {
                 }`}
               >
                 {isEditing ? (
-                  <p>edit</p>
-                ) : (
+                  //Start editing form
+                  <form
+                    className="tw-flex"
+                    onSubmit={(e) => onSubmitEditFields(e, item.id)}
+                  >
+                    <input
+                      type="text"
+                      id="description"
+                      placeholder="Description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      id="amount"
+                      placeholder="Amount"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                    />
+                    <select
+                      name="currency"
+                      id="currency"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                    >
+                      <option value="default">- Currency -</option>
+                      <option value="€">€</option>
+                      <option value="$">$</option>
+                      <option value="£">£</option>
+                      <option value="RON">RON</option>
+                    </select>
+                    <div>
+                      <input
+                        type="radio"
+                        id="Expense"
+                        value="Expense"
+                        checked={transactionType === "Expense"}
+                        onChange={handleRadioChange}
+                      />
+                      <label htmlFor="Expense">Expense</label>
+                      <input
+                        type="radio"
+                        id="Income"
+                        value="Income"
+                        checked={transactionType === "Income"}
+                        onChange={handleRadioChange}
+                      />
+                      <label htmlFor="Income">Income</label>
+                    </div>
+                    <div>
+                      <label htmlFor="category">Category</label>
+                      <select
+                        name="category"
+                        id="category"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                      >
+                        <option value="default">- Category -</option>
+                        <option value="Food">Food</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Medical">Medical</option>
+                        <option value="Economy">Economy</option>
+                      </select>
+                    </div>
+                    <button type="submit">Save</button>
+                  </form>
+                ) : ( 
                   <>
                     <span className="tw-flex tw-items-center tw-justify-center">
                       {item.name}
