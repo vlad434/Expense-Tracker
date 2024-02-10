@@ -7,11 +7,12 @@ export default function ExpenseTracker() {
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState(0);
-  // const [currency, setCurrency] = useState('');
+  const [currency, setCurrency] = useState("default");
   const [transactionType, setTransactionType] = useState("Expense");
   const [selectedCategory, setSelectedCategory] = useState("default");
-    const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const addTransaction = (value) => {
     setEntries([...entries, value]);
@@ -32,12 +33,19 @@ export default function ExpenseTracker() {
     setEntries(entries.filter((transaction) => transaction.id !== id));
   };
 
-  const resetFields = () => { 
+  const editTransaction = (id) => {
+    console.log("edit transaction", id);
+    setIsEditing(true);
+    // setEntries(entries.filter((transaction) => transaction.id !== id));
+  };
+
+  const resetFields = () => {
     setDescription("");
     setAmount(0);
+    setCurrency("default");
     setTransactionType("Expense");
     setSelectedCategory("default");
-  }
+  };
 
   const handleRadioChange = (e) => {
     setTransactionType(e.target.value);
@@ -57,27 +65,30 @@ export default function ExpenseTracker() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-  
-    const formIsValid = description !== '' && (amount !== 0 || amount !== '') && selectedCategory !== 'default';
-  
+
+    const formIsValid =
+      description !== "" &&
+      (amount !== 0 || amount !== "") &&
+      selectedCategory !== "default";
+
     if (formIsValid) {
       let newTransaction = {
         id: Math.floor(Math.random() * 100000000),
         name: description,
         amount: amount,
+        currency: currency,
         type: transactionType,
         category: selectedCategory,
       };
       addTransaction(newTransaction);
       resetFields();
-    } else { 
+    } else {
       console.log("Form is not valid. Please fill in all fields.");
     }
   };
-   
 
   return (
-    <div className="tw-w-full tw-grid tw-items-center tw-justify-center tw-space-y-4">  
+    <div className="tw-w-full tw-grid tw-items-center tw-justify-center tw-space-y-4">
       <div className="tw-grid">
         <span>Balance: {balance}</span>
         <span>Income: {income}</span>
@@ -99,6 +110,18 @@ export default function ExpenseTracker() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
+        <select
+          name="currency"
+          id="currency"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+        >
+          <option value="default">- Currency -</option>
+          <option value="€">€</option>
+          <option value="$">$</option>
+          <option value="£">£</option>
+          <option value="RON">RON</option>
+        </select>
         <div>
           <input
             type="radio"
@@ -167,32 +190,54 @@ export default function ExpenseTracker() {
                   item.type === "Income" ? "tw-bg-green-400" : "tw-bg-red-400"
                 }`}
               >
-                <span className="tw-flex tw-items-center tw-justify-center">
-                  {item.name}
-                </span>
-                <span className="tw-flex tw-items-center tw-justify-center">
-                  {item.amount} RON
-                </span>
-                <span className="tw-flex tw-items-center tw-justify-center">
-                  {item.category}
-                </span>
-                <span className="tw-flex tw-items-center tw-justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    onClick={() => deleteTransaction(item.id)}
-                    className="tw-w-3 tw-h-3 tw-cursor-pointer"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>
-                </span>
+                {isEditing ? (
+                  <p>edit</p>
+                ) : (
+                  <>
+                    <span className="tw-flex tw-items-center tw-justify-center">
+                      {item.name}
+                    </span>
+                    <span className="tw-flex tw-items-center tw-justify-center">
+                      {item.amount} {item.currency}
+                    </span>
+                    <span className="tw-flex tw-items-center tw-justify-center">
+                      {item.category}
+                    </span>
+                    <span className="tw-flex tw-items-center tw-justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        onClick={() => editTransaction(item.id)}
+                        className="tw-w-5 tw-h-5 tw-cursor-pointer"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                        />
+                      </svg>
+
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        onClick={() => deleteTransaction(item.id)}
+                        className="tw-w-5 tw-h-5 tw-cursor-pointer"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </span>
+                  </>
+                )}
               </div>
             )
           )}
