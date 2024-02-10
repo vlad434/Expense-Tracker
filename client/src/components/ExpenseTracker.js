@@ -5,14 +5,14 @@ export default function ExpenseTracker() {
   const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState(0);
 
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState("");
   const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState("default");
   const [transactionType, setTransactionType] = useState("Expense");
   const [selectedCategory, setSelectedCategory] = useState("default");
   const [entries, setEntries] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState(null);
 
   const addTransaction = (value) => {
     setEntries([...entries, value]);
@@ -34,13 +34,13 @@ export default function ExpenseTracker() {
   };
 
   const editTransaction = (id) => {
-    setIsEditing(true);
+    setEditingEntryId(id);
 
     const transactionToEdit = entries.find(
       (transaction) => transaction.id === id
     );
 
-    setDescription(transactionToEdit.name);
+    setName(transactionToEdit.name);
     setAmount(transactionToEdit.amount);
     setCurrency(transactionToEdit.currency);
     setTransactionType(transactionToEdit.type);
@@ -48,11 +48,12 @@ export default function ExpenseTracker() {
   };
 
   const resetFields = () => {
-    setDescription("");
+    setName("");
     setAmount(0);
     setCurrency("default");
     setTransactionType("Expense");
     setSelectedCategory("default");
+    setEditingEntryId(null); 
   };
 
   const handleRadioChange = (e) => {
@@ -75,14 +76,14 @@ export default function ExpenseTracker() {
     e.preventDefault();
 
     const formIsValid =
-      description !== "" &&
+      name !== "" &&
       (amount !== 0 || amount !== "") &&
       selectedCategory !== "default";
 
     if (formIsValid) {
       let newTransaction = {
         id: Math.floor(Math.random() * 100000000),
-        name: description,
+        name: name,
         amount: amount,
         currency: currency,
         type: transactionType,
@@ -99,7 +100,7 @@ export default function ExpenseTracker() {
     e.preventDefault();
 
     const formIsValid =
-      description !== "" &&
+      name !== "" &&
       (amount !== 0 || amount !== "") &&
       selectedCategory !== "default";
 
@@ -110,8 +111,8 @@ export default function ExpenseTracker() {
         (transaction) => transaction.id === id
       );
 
-      // Update the description of the transaction at the found index
-      updatedEntries[transactionIndex].name = description;
+      // Update the name of the transaction at the found index
+      updatedEntries[transactionIndex].name = name;
       updatedEntries[transactionIndex].amount = amount;
       updatedEntries[transactionIndex].currency = currency;
       updatedEntries[transactionIndex].type = transactionType;
@@ -119,12 +120,11 @@ export default function ExpenseTracker() {
 
       setEntries(updatedEntries);
 
-      setIsEditing(false);
+      setEditingEntryId(null); // Reset editing state
     } else {
       console.log("Edit form is not valid. Please fill in all fields.");
     }
   };
-
   return (
     <div className="tw-w-full tw-grid tw-items-center tw-justify-center tw-space-y-4">
       <div className="tw-grid">
@@ -136,10 +136,10 @@ export default function ExpenseTracker() {
       <form className="tw-flex" onSubmit={onSubmit}>
         <input
           type="text"
-          id="description"
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          id="name"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
         <input
           type="text"
@@ -228,7 +228,7 @@ export default function ExpenseTracker() {
                   item.type === "Income" ? "tw-bg-green-400" : "tw-bg-red-400"
                 }`}
               >
-                {isEditing ? (
+                {editingEntryId === item.id ? (
                   //Start editing form
                   <form
                     className="tw-flex"
@@ -236,10 +236,10 @@ export default function ExpenseTracker() {
                   >
                     <input
                       type="text"
-                      id="description"
-                      placeholder="Description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      id="name"
+                      placeholder="Name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                     <input
                       type="text"
