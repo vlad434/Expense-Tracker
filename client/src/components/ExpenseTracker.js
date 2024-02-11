@@ -21,9 +21,9 @@ export default function ExpenseTracker() {
       .then((data) => setEntries(data));
   }, []);
 
-  const addTransaction = (value) => { 
-    value.transaction_type = transactionType; 
-     
+  const addTransaction = (value) => {
+    value.transaction_type = transactionType;
+
     fetch("http://localhost:5000/entries", {
       method: "POST",
       headers: {
@@ -32,7 +32,7 @@ export default function ExpenseTracker() {
       body: JSON.stringify(value),
     })
       .then((res) => res.json())
-      .then((data) => { 
+      .then((data) => {
         setEntries([...entries, data]);
         if (data.type === "Income") {
           setIncome(income + parseFloat(data.amount));
@@ -50,23 +50,39 @@ export default function ExpenseTracker() {
         console.error("Error adding transaction:", error);
       });
   };
-  
+
   const deleteTransaction = (id) => {
     const transactionToDelete = entries.find(
-      (transaction) => transaction.id === id
+      (transaction) => transaction.entry_id === id
     );
-    if (transactionToDelete.type === "Income") {
-      setIncome(income - parseFloat(transactionToDelete.amount));
-    } else {
-      setExpenses(expenses - parseFloat(transactionToDelete.amount));
-    }
-    setBalance(
-      balance -
-        (transactionToDelete.type === "Income"
-          ? parseFloat(transactionToDelete.amount)
-          : -parseFloat(transactionToDelete.amount))
-    );
-    setEntries(entries.filter((transaction) => transaction.id !== id));
+
+    // Send DELETE request to the backend API
+    fetch(`http://localhost:5000/entries/${id}`, {
+      method: "DELETE",
+    })
+      .then((res) => {
+        if (res.ok) {
+          if (transactionToDelete.transaction_type === "Income") {
+            setIncome(income - parseFloat(transactionToDelete.amount));
+          } else {
+            setExpenses(expenses - parseFloat(transactionToDelete.amount));
+          }
+          setBalance(
+            balance -
+              (transactionToDelete.transaction_type === "Income"
+                ? parseFloat(transactionToDelete.amount)
+                : -parseFloat(transactionToDelete.amount))
+          );
+          setEntries(
+            entries.filter((transaction) => transaction.entry_id !== id)
+          );
+        } else {
+          console.error("Failed to delete transaction");
+        }
+      })
+      .catch((error) => {
+        console.error(error.message);
+      });
   };
 
   const editTransaction = (id) => {
@@ -261,14 +277,16 @@ export default function ExpenseTracker() {
               <div
                 key={index}
                 className={`tw-grid tw-grid-cols-4 tw-rounded tw-py-1 ${
-                  item.transaction_type === "Income" ? "tw-bg-green-400" : "tw-bg-red-400"
+                  item.transaction_type === "Income"
+                    ? "tw-bg-green-400"
+                    : "tw-bg-red-400"
                 }`}
               >
-                {editingEntryId === item.id ? (
+                {editingEntryId === item.entry_id ? (
                   //Start editing form
                   <form
                     className="tw-flex"
-                    onSubmit={(e) => onSubmitEditFields(e, item.id)}
+                    onSubmit={(e) => onSubmitEditFields(e, item.entry_id)}
                   >
                     <input
                       type="text"
@@ -349,7 +367,7 @@ export default function ExpenseTracker() {
                         viewBox="0 0 24 24"
                         strokeWidth="1.5"
                         stroke="currentColor"
-                        onClick={() => editTransaction(item.id)}
+                        onClick={() => editTransaction(item.entry_id)}
                         className="tw-w-5 tw-h-5 tw-cursor-pointer"
                       >
                         <path
@@ -365,7 +383,7 @@ export default function ExpenseTracker() {
                         viewBox="0 0 24 24"
                         strokeWidth="1.5"
                         stroke="currentColor"
-                        onClick={() => deleteTransaction(item.id)}
+                        onClick={() => deleteTransaction(item.entry_id)}
                         className="tw-w-5 tw-h-5 tw-cursor-pointer"
                       >
                         <path
