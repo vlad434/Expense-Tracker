@@ -56,7 +56,6 @@ export default function ExpenseTracker() {
       (transaction) => transaction.entry_id === id
     );
 
-    // Send DELETE request to the backend API
     fetch(`http://localhost:5000/entries/${id}`, {
       method: "DELETE",
     })
@@ -89,13 +88,13 @@ export default function ExpenseTracker() {
     setEditingEntryId(id);
 
     const transactionToEdit = entries.find(
-      (transaction) => transaction.id === id
+      (transaction) => transaction.entry_id === id
     );
 
     setName(transactionToEdit.name);
     setAmount(transactionToEdit.amount);
     setCurrency(transactionToEdit.currency);
-    setTransactionType(transactionToEdit.type);
+    setTransactionType(transactionToEdit.transaction_type);
     setSelectedCategory(transactionToEdit.category);
   };
 
@@ -150,33 +149,45 @@ export default function ExpenseTracker() {
 
   const onSubmitEditFields = (e, id) => {
     e.preventDefault();
-
+  
     const formIsValid =
       name !== "" &&
       (amount !== 0 || amount !== "") &&
       selectedCategory !== "default";
-
+  
     if (formIsValid) {
-      const updatedEntries = [...entries];
-
-      const transactionIndex = updatedEntries.findIndex(
-        (transaction) => transaction.id === id
-      );
-
-      // Update the name of the transaction at the found index
-      updatedEntries[transactionIndex].name = name;
-      updatedEntries[transactionIndex].amount = amount;
-      updatedEntries[transactionIndex].currency = currency;
-      updatedEntries[transactionIndex].type = transactionType;
-      updatedEntries[transactionIndex].category = selectedCategory;
-
-      setEntries(updatedEntries);
-
-      setEditingEntryId(null); // Reset editing state
+      const updatedTransaction = {
+        name: name,
+        amount: amount,
+        currency: currency,
+        transaction_type: transactionType,
+        category: selectedCategory,
+      };
+  
+      fetch(`http://localhost:5000/entries/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedTransaction),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          // console.log("Transaction updated successfully:", data); 
+          const updatedEntries = entries.map((entry) =>
+            entry.entry_id === id ? { ...entry, ...updatedTransaction } : entry
+          );
+          setEntries(updatedEntries);
+          setEditingEntryId(null);
+        })
+        .catch((error) => {
+          console.error("Error updating transaction:", error);
+        });
     } else {
       console.log("Edit form is not valid. Please fill in all fields.");
     }
   };
+
   return (
     <div className="tw-w-full tw-grid tw-items-center tw-justify-center tw-space-y-4">
       <div className="tw-grid">
