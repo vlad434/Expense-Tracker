@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function ExpenseTracker() {
   const [balance, setBalance] = useState(0);
@@ -14,23 +14,47 @@ export default function ExpenseTracker() {
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [editingEntryId, setEditingEntryId] = useState(null);
 
-  const addTransaction = (value) => {
-    setEntries([...entries, value]);
-    if (value.type === "Income") {
-      setIncome(income + parseFloat(value.amount));
-    } else {
-      setExpenses(expenses + parseFloat(value.amount));
-    }
-    setBalance(
-      balance +
-        (value.type === "Income"
-          ? parseFloat(value.amount)
-          : -parseFloat(value.amount))
-    );
-  };
+  //Get entries from API
+  useEffect(() => {
+    fetch("http://localhost:5000/entries")
+      .then((res) => res.json())
+      .then((data) => setEntries(data));
+  }, []);
 
+  const addTransaction = (value) => { 
+    value.transaction_type = transactionType; 
+     
+    fetch("http://localhost:5000/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(value),
+    })
+      .then((res) => res.json())
+      .then((data) => { 
+        setEntries([...entries, data]);
+        if (data.type === "Income") {
+          setIncome(income + parseFloat(data.amount));
+        } else {
+          setExpenses(expenses + parseFloat(data.amount));
+        }
+        setBalance(
+          balance +
+            (data.type === "Income"
+              ? parseFloat(data.amount)
+              : -parseFloat(data.amount))
+        );
+      })
+      .catch((error) => {
+        console.error("Error adding transaction:", error);
+      });
+  };
+  
   const deleteTransaction = (id) => {
-    const transactionToDelete = entries.find((transaction) => transaction.id === id);
+    const transactionToDelete = entries.find(
+      (transaction) => transaction.id === id
+    );
     if (transactionToDelete.type === "Income") {
       setIncome(income - parseFloat(transactionToDelete.amount));
     } else {
@@ -44,7 +68,6 @@ export default function ExpenseTracker() {
     );
     setEntries(entries.filter((transaction) => transaction.id !== id));
   };
-  
 
   const editTransaction = (id) => {
     setEditingEntryId(id);
@@ -66,7 +89,7 @@ export default function ExpenseTracker() {
     setCurrency("default");
     setTransactionType("Expense");
     setSelectedCategory("default");
-    setEditingEntryId(null); 
+    setEditingEntryId(null);
   };
 
   const handleRadioChange = (e) => {
@@ -238,7 +261,7 @@ export default function ExpenseTracker() {
               <div
                 key={index}
                 className={`tw-grid tw-grid-cols-4 tw-rounded tw-py-1 ${
-                  item.type === "Income" ? "tw-bg-green-400" : "tw-bg-red-400"
+                  item.transaction_type === "Income" ? "tw-bg-green-400" : "tw-bg-red-400"
                 }`}
               >
                 {editingEntryId === item.id ? (
@@ -308,7 +331,7 @@ export default function ExpenseTracker() {
                     </div>
                     <button type="submit">Save</button>
                   </form>
-                ) : ( 
+                ) : (
                   <>
                     <span className="tw-flex tw-items-center tw-justify-center">
                       {item.name}
