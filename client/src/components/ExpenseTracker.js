@@ -183,6 +183,7 @@ export default function ExpenseTracker() {
           id="name"
           placeholder="Name"
           value={name}
+          autoComplete='Name'
           onChange={(e) => setName(e.target.value)}
         />
         <input
@@ -268,7 +269,7 @@ export default function ExpenseTracker() {
             (item, index) => (
               <div
                 key={index}
-                className={`tw-grid tw-grid-cols-4 tw-rounded tw-py-1 ${
+                className={`tw-grid tw-grid-cols-5 tw-rounded tw-py-1 ${
                   item.transaction_type === "Income"
                     ? "tw-bg-green-400"
                     : "tw-bg-red-400"
@@ -351,6 +352,9 @@ export default function ExpenseTracker() {
                     </span>
                     <span className="tw-flex tw-items-center tw-justify-center">
                       {item.category}
+                    </span>
+                    <span className="tw-flex tw-items-center tw-justify-center">
+                      {(item.date_time).substring(0, 10)}
                     </span>
                     <span className="tw-flex tw-items-center tw-justify-center">
                       <svg
