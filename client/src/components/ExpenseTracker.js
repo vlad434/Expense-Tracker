@@ -52,26 +52,11 @@ export default function ExpenseTracker() {
   };
 
   const deleteTransaction = (id) => {
-    const transactionToDelete = entries.find(
-      (transaction) => transaction.entry_id === id
-    );
-
     fetch(`http://localhost:5000/entries/${id}`, {
       method: "DELETE",
     })
       .then((res) => {
         if (res.ok) {
-          if (transactionToDelete.transaction_type === "Income") {
-            setIncome(income - parseFloat(transactionToDelete.amount));
-          } else {
-            setExpenses(expenses - parseFloat(transactionToDelete.amount));
-          }
-          setBalance(
-            balance -
-              (transactionToDelete.transaction_type === "Income"
-                ? parseFloat(transactionToDelete.amount)
-                : -parseFloat(transactionToDelete.amount))
-          );
           setEntries(
             entries.filter((transaction) => transaction.entry_id !== id)
           );
@@ -107,10 +92,6 @@ export default function ExpenseTracker() {
     setEditingEntryId(null);
   };
 
-  const handleRadioChange = (e) => {
-    setTransactionType(e.target.value);
-  };
-
   const handleSortByCategory = (e) => {
     e.preventDefault();
     if (e.target.value === "default") {
@@ -119,7 +100,7 @@ export default function ExpenseTracker() {
       let filteredCategories = entries.filter(
         (entry) => entry.category === e.target.value
       );
-      setFilteredCategories(filteredCategories);
+      setFilteredCategories(filteredCategories)
     }
   };
 
@@ -149,12 +130,12 @@ export default function ExpenseTracker() {
 
   const onSubmitEditFields = (e, id) => {
     e.preventDefault();
-  
+
     const formIsValid =
       name !== "" &&
       (amount !== 0 || amount !== "") &&
       selectedCategory !== "default";
-  
+
     if (formIsValid) {
       const updatedTransaction = {
         name: name,
@@ -163,7 +144,7 @@ export default function ExpenseTracker() {
         transaction_type: transactionType,
         category: selectedCategory,
       };
-  
+
       fetch(`http://localhost:5000/entries/${id}`, {
         method: "PUT",
         headers: {
@@ -173,7 +154,7 @@ export default function ExpenseTracker() {
       })
         .then((res) => res.json())
         .then((data) => {
-          // console.log("Transaction updated successfully:", data); 
+          // console.log("Transaction updated successfully:", data);
           const updatedEntries = entries.map((entry) =>
             entry.entry_id === id ? { ...entry, ...updatedTransaction } : entry
           );
@@ -229,7 +210,7 @@ export default function ExpenseTracker() {
             id="Expense"
             value="Expense"
             checked={transactionType === "Expense"}
-            onChange={handleRadioChange}
+            onChange={(e) => setTransactionType(e.target.value)}
           />
           <label htmlFor="Expense">Expense</label>
           <input
@@ -237,7 +218,7 @@ export default function ExpenseTracker() {
             id="Income"
             value="Income"
             checked={transactionType === "Income"}
-            onChange={handleRadioChange}
+            onChange={(e) => setTransactionType(e.target.value)}
           />
           <label htmlFor="Income">Income</label>
         </div>
@@ -283,7 +264,7 @@ export default function ExpenseTracker() {
         </div>
         {/* End sort transactions by category*/}
         <div className={`tw-space-y-2 tw-mb-2 tw-w-10/12`}>
-          {(filteredCategories.length > 0 ? filteredCategories : entries).map(
+           {(filteredCategories.length > 0 ? filteredCategories : entries).map(
             (item, index) => (
               <div
                 key={index}
@@ -331,7 +312,7 @@ export default function ExpenseTracker() {
                         id="Expense"
                         value="Expense"
                         checked={transactionType === "Expense"}
-                        onChange={handleRadioChange}
+                        onChange={(e) => setTransactionType(e.target.value)}
                       />
                       <label htmlFor="Expense">Expense</label>
                       <input
@@ -339,7 +320,7 @@ export default function ExpenseTracker() {
                         id="Income"
                         value="Income"
                         checked={transactionType === "Income"}
-                        onChange={handleRadioChange}
+                        onChange={(e) => setTransactionType(e.target.value)}
                       />
                       <label htmlFor="Income">Income</label>
                     </div>
