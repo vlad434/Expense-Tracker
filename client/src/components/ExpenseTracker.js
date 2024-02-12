@@ -19,6 +19,9 @@ export default function ExpenseTracker() {
     fetch("http://localhost:5000/entries")
       .then((res) => res.json())
       .then((data) => setEntries(data));
+    return () => {
+      setEntries([]);
+    };
   }, []);
 
   const addTransaction = (value) => {
@@ -34,16 +37,23 @@ export default function ExpenseTracker() {
       .then((res) => res.json())
       .then((data) => {
         setEntries([...entries, data]);
-        if (data.type === "Income") {
-          setIncome(income + parseFloat(data.amount));
-        } else {
-          setExpenses(expenses + parseFloat(data.amount));
+        switch (value.transaction_type) {
+          case "Income":
+            setIncome((prevIncome) => prevIncome + parseFloat(value.amount));
+            break;
+          case "Expense":
+            setExpenses(
+              (prevExpenses) => prevExpenses + parseFloat(value.amount)
+            );
+            break;
+          default:
+            break;
         }
         setBalance(
-          balance +
-            (data.type === "Income"
-              ? parseFloat(data.amount)
-              : -parseFloat(data.amount))
+          (prevBalance) =>
+            prevBalance +
+            parseFloat(value.amount) *
+              (value.transaction_type === "Income" ? 1 : -1)
         );
       })
       .catch((error) => {
@@ -57,8 +67,31 @@ export default function ExpenseTracker() {
     })
       .then((res) => {
         if (res.ok) {
+          const transactionToDelete = entries.find(
+            (transaction) => transaction.entry_id === id
+          );
           setEntries(
             entries.filter((transaction) => transaction.entry_id !== id)
+          );
+          switch (transactionToDelete.transaction_type) {
+            case "Income":
+              setIncome(
+                (prevIncome) =>
+                  prevIncome - parseFloat(transactionToDelete.amount)
+              );
+              break;
+            case "Expense":
+              setExpenses(
+                (prevExpenses) =>
+                  prevExpenses - parseFloat(transactionToDelete.amount)
+              );
+              break;
+          }
+          setBalance(
+            (prevBalance) =>
+              prevBalance -
+              parseFloat(transactionToDelete.amount) *
+                (transactionToDelete.transaction_type === "Income" ? 1 : -1)
           );
         } else {
           console.error("Failed to delete transaction");
@@ -81,6 +114,18 @@ export default function ExpenseTracker() {
     setCurrency(transactionToEdit.currency);
     setTransactionType(transactionToEdit.transaction_type);
     setSelectedCategory(transactionToEdit.category);
+
+    switch (transactionToEdit.transaction_type) {
+      case "Income":
+        setIncome((prevIncome) => prevIncome - parseFloat(transactionToEdit.amount));
+        break;
+      case "Expense":
+        setExpenses((prevExpenses) => prevExpenses - parseFloat(transactionToEdit.amount));
+        break;
+      default:
+        break;
+    }
+    setBalance((prevBalance) => prevBalance + parseFloat(transactionToEdit.amount) * (transactionToEdit.transaction_type === "Income" ? -1 : 1));
   };
 
   const resetFields = () => {
@@ -100,7 +145,7 @@ export default function ExpenseTracker() {
       let filteredCategories = entries.filter(
         (entry) => entry.category === e.target.value
       );
-      setFilteredCategories(filteredCategories)
+      setFilteredCategories(filteredCategories);
     }
   };
 
@@ -114,7 +159,6 @@ export default function ExpenseTracker() {
 
     if (formIsValid) {
       let newTransaction = {
-        id: Math.floor(Math.random() * 100000000),
         name: name,
         amount: amount,
         currency: currency,
@@ -160,6 +204,7 @@ export default function ExpenseTracker() {
           );
           setEntries(updatedEntries);
           setEditingEntryId(null);
+          resetFields();
         })
         .catch((error) => {
           console.error("Error updating transaction:", error);
@@ -169,13 +214,38 @@ export default function ExpenseTracker() {
     }
   };
 
+  const calculateTotals = () => {
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    entries.forEach((entry) => {
+      if (entry.transaction_type === "Income") {
+        totalIncome += parseFloat(entry.amount);
+      } else if (entry.transaction_type === "Expense") {
+        totalExpenses += parseFloat(entry.amount);
+      }
+    });
+
+    const totalBalance = totalIncome - totalExpenses;
+
+    setIncome(totalIncome);
+    setExpenses(totalExpenses);
+    setBalance(totalBalance);
+  };
+
+  useEffect(() => {
+    calculateTotals();
+  }, [entries]);
+
   return (
     <div className="tw-w-full tw-grid tw-items-center tw-justify-center tw-space-y-4">
+      {/* Start balance container */}
       <div className="tw-grid">
         <span>Balance: {balance}</span>
         <span>Income: {income}</span>
         <span>Expenses: {expenses}</span>
       </div>
+      {/* End balance container */}
       {/* Start add transaction fields */}
       <form className="tw-flex" onSubmit={onSubmit}>
         <input
@@ -183,11 +253,13 @@ export default function ExpenseTracker() {
           id="name"
           placeholder="Name"
           value={name}
-          autoComplete='Name'
+          autoComplete="off"
           onChange={(e) => setName(e.target.value)}
         />
         <input
-          type="text"
+          type="number"
+          autoComplete="off"
+          step="1"
           id="amount"
           placeholder="Amount"
           value={amount}
@@ -264,8 +336,9 @@ export default function ExpenseTracker() {
           </select>
         </div>
         {/* End sort transactions by category*/}
+        {/* Start transactions container */}
         <div className={`tw-space-y-2 tw-mb-2 tw-w-10/12`}>
-           {(filteredCategories.length > 0 ? filteredCategories : entries).map(
+          {(filteredCategories.length > 0 ? filteredCategories : entries).map(
             (item, index) => (
               <div
                 key={index}
@@ -354,7 +427,7 @@ export default function ExpenseTracker() {
                       {item.category}
                     </span>
                     <span className="tw-flex tw-items-center tw-justify-center">
-                      {(item.date_time).substring(0, 10)}
+                      {item.date_time.substring(0, 10)}
                     </span>
                     <span className="tw-flex tw-items-center tw-justify-center">
                       <svg
@@ -395,6 +468,7 @@ export default function ExpenseTracker() {
             )
           )}
         </div>
+        {/* End transactions container */}
       </div>
       {/* End transaction history */}
     </div>
